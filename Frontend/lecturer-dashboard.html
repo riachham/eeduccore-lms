@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Educore - Lecturer Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Educore</h2>
+    <nav>
+      <a href="lecturer-dashboard.html" class="active">Dashboard</a>
+      <a href="#">Upload Notes</a>
+      <a href="#">Assignments</a>
+      <a href="#">Start Live Class</a>
+      <a href="#">Attendance Reports</a>
+    </nav>
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="main-content">
+    <div class="welcome-banner">
+      <h1 id="welcomeName">Welcome...</h1>
+      <p id="welcomeDetails">Loading your details...</p>
+    </div>
+
+    <h2 style="color:#1a3c6e; margin-bottom:1rem;">My Units</h2>
+    <div class="units-grid" id="unitsGrid">
+      <p>Loading units...</p>
+    </div>
+
+    <!-- Upload Notes Modal -->
+    <div id="uploadModal" class="modal-overlay" style="display:none;">
+      <div class="modal-box">
+        <h2>Upload Notes</h2>
+        <p id="uploadUnitName" style="color:#666; margin-bottom:1rem;"></p>
+
+        <form id="uploadNoteForm">
+          <label for="noteTitle">Title</label>
+          <input type="text" id="noteTitle" required />
+
+          <label for="noteFile">File</label>
+          <input type="file" id="noteFile" required />
+
+          <div style="display:flex; gap:0.5rem; margin-top:1.5rem;">
+            <button type="submit">Upload</button>
+            <button type="button" id="closeModalBtn" style="background-color:#999;">Cancel</button>
+          </div>
+        </form>
+
+        <p id="uploadMessage" style="margin-top:1rem;"></p>
+      </div>
+    </div>
+
+    <!-- CAT Modal -->
+    <div id="catModal" class="modal-overlay" style="display:none;">
+      <div class="modal-box">
+        <h2>Create CAT</h2>
+        <p id="catUnitName" style="color:#666; margin-bottom:1rem;"></p>
+
+        <form id="createCatForm">
+          <label for="catTitle">Title</label>
+          <input type="text" id="catTitle" required />
+
+          <label for="catDescription">Description</label>
+          <input type="text" id="catDescription" />
+
+          <label for="catDeadline">Deadline</label>
+          <input type="datetime-local" id="catDeadline" required />
+
+          <label for="catFile">Attach File (optional)</label>
+          <input type="file" id="catFile" />
+
+          <div style="display:flex; gap:0.5rem; margin-top:1.5rem;">
+            <button type="submit">Create</button>
+            <button type="button" id="closeCatModalBtn" style="background-color:#999;">Cancel</button>
+          </div>
+        </form>
+
+        <p id="catMessage" style="margin-top:1rem;"></p>
+      </div>
+    </div>
+
+    <!-- Attendance History Modal -->
+    <div id="attendanceHistoryModal" class="modal-overlay" style="display:none;">
+      <div class="modal-box">
+        <h2>Attendance Sessions</h2>
+        <p id="attendanceHistoryUnitName" style="color:#666; margin-bottom:1rem;"></p>
+
+        <div id="attendanceHistoryList">
+          <p>Loading sessions...</p>
+        </div>
+
+        <button type="button" id="closeAttendanceHistoryBtn" style="background-color:#999; margin-top:1.5rem;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/lecturer-dashboard.js"></script>
+</body>
+</html>

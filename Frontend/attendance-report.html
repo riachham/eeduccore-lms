@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Educore - Attendance Report</title>
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    th, td {
+      padding: 0.8rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background-color: #1a3c6e;
+      color: white;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+    .status-badge {
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: inline-block;
+    }
+    .status-full { background-color: #d4edda; color: #155724; }
+    .status-partial { background-color: #fff3cd; color: #856404; }
+    .status-none { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Educore</h2>
+    <nav>
+      <a href="lecturer-dashboard.html">Dashboard</a>
+    </nav>
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="main-content">
+    <div class="welcome-banner">
+      <h1 id="reportTitle">Attendance Report</h1>
+      <p id="reportUnit">Loading...</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Admission Number</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="reportBody">
+        <tr><td colspan="3">Loading attendance data...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script src="js/attendance-report.js"></script>
+</body>
+</html>

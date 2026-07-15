@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Educore - Live Class</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { background-color: #1a1a1a; }
+    #topbar {
+      background-color: #1a3c6e;
+      color: white;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #topbar h2 { font-size: 1.1rem; }
+    #topbar .info { display: flex; align-items: center; gap: 1rem; }
+    #participantCount {
+      background-color: rgba(255,255,255,0.15);
+      padding: 0.4rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+    #topbar .buttons { display: flex; gap: 0.5rem; }
+    #topbar button {
+      background-color: #b02a2a;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #topbar button.end-btn { background-color: #999; }
+    #topbar button.share-btn { background-color: #2a7a3f; }
+    #fullscreenBtn { background-color: #444; }
+
+    #meet-container {
+      height: calc(100vh - 60px);
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: center;
+      justify-content: center;
+      padding: 1rem;
+      gap: 1rem;
+    }
+    .video-box {
+      flex: 1 1 400px;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+    video {
+      background-color: #000;
+      border-radius: 8px;
+      width: 100%;
+      height: 60vh;
+      object-fit: cover;
+    }
+    .video-label {
+      color: white;
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 0.3rem;
+    }
+
+    #attendanceOverlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    #attendanceBox {
+      background-color: white;
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 320px;
+    }
+    #attendanceBox h3 { color: #1a3c6e; margin-bottom: 1rem; }
+    #attendanceBox button {
+      margin-top: 1rem;
+      padding: 0.7rem 1.5rem;
+      background-color: #1a3c6e;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="topbar">
+    <h2 id="unitTitle">Live Class</h2>
+    <div class="info">
+      <span id="participantCount">1 in class</span>
+      <div class="buttons">
+        <button id="shareBtn" class="share-btn">Share Screen</button>
+        <button id="fullscreenBtn">Fullscreen</button>
+        <button id="endClassBtn" class="end-btn" style="display:none;">End Class</button>
+        <button onclick="leaveClass()">Leave</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="meet-container"></div>
+
+  <div id="attendanceOverlay">
+    <div id="attendanceBox">
+      <h3>Attendance Check</h3>
+      <p>Please confirm you're still present in class.</p>
+      <button id="confirmAttendanceBtn">I'm Here</button>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const roomName = params.get('room');
+    const unitName = params.get('unit');
+    const unitId = params.get('unitId');
+    const liveClassId = params.get('id');
+
+    document.getElementById('unitTitle').textContent = `Live Class: ${unitName || ''}`;
+
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const token = localStorage.getItem('token');
+    const role = user.role;
+
+    const socket = io('http://localhost:5000');
+    const meetContainer = document.getElementById('meet-container');
+
+    const peerConnections = {};
+    let localStream = null;
+    let screenStream = null;
+
+    const iceServers = {
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+    };
+
+    function addVideoBox(id, stream, label) {
+      let box = document.getElementById(`box-${id}`);
+      if (!box) {
+        box = document.createElement('div');
+        box.className = 'video-box';
+        box.id = `box-${id}`;
+
+        const video = document.createElement('video');
+        video.id = `video-${id}`;
+        video.autoplay = true;
+        video.playsInline = true;
+        if (id === 'local') video.muted = true;
+
+        const labelEl = document.createElement('div');
+        labelEl.className = 'video-label';
+        labelEl.textContent = label;
+
+        box.appendChild(video);
+        box.appendChild(labelEl);
+        meetContainer.appendChild(box);
+      }
+      document.getElementById(`video-${id}`).srcObject = stream;
+      updateParticipantCount();
+    }
+
+    function removeVideoBox(id) {
+      const box = document.getElementById(`box-${id}`);
+      if (box) box.remove();
+      updateParticipantCount();
+    }
+
+    function updateParticipantCount() {
+      const count = meetContainer.querySelectorAll('.video-box').length;
+      document.getElementById('participantCount').textContent = `${count} in class`;
+    }
+
+    async function startLocalMedia() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        addVideoBox('local', localStream, `${user.name} (You)`);
+      } catch (error) {
+        alert('Could not access camera/microphone: ' + error.message);
+      }
+    }
+
+    function createPeerConnection(targetId) {
+      const pc = new RTCPeerConnection(iceServers);
+
+      if (localStream) {
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+      }
+
+      pc.ontrack = (event) => {
+        addVideoBox(targetId, event.streams[0], 'Participant');
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('ice-candidate', { target: targetId, candidate: event.candidate });
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'connected') {
+          setTimeout(updateParticipantCount, 500);
+        }
+      };
+
+      peerConnections[targetId] = pc;
+      return pc;
+    }
+
+    socket.on('connect', async () => {
+      await startLocalMedia();
+      socket.emit('join-room', roomName);
+    });
+
+    socket.on('user-joined', async (newUserId) => {
+      const pc = createPeerConnection(newUserId);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit('offer', { target: newUserId, sdp: offer });
+    });
+
+    socket.on('offer', async (data) => {
+      const pc = createPeerConnection(data.from);
+      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('answer', { target: data.from, sdp: answer });
+    });
+
+    socket.on('answer', async (data) => {
+      const pc = peerConnections[data.from];
+      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+    });
+
+    socket.on('ice-candidate', async (data) => {
+      const pc = peerConnections[data.from];
+      if (pc) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (error) {
+          console.error('Error adding ICE candidate', error);
+        }
+      }
+    });
+
+    socket.on('user-left', (id) => {
+      if (peerConnections[id]) {
+        peerConnections[id].close();
+        delete peerConnections[id];
+      }
+      removeVideoBox(id);
+    });
+
+    document.getElementById('fullscreenBtn').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    // Screen sharing
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+      try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const screenTrack = screenStream.getVideoTracks()[0];
+
+        Object.values(peerConnections).forEach(pc => {
+          const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+          if (sender) sender.replaceTrack(screenTrack);
+        });
+
+        document.getElementById('video-local').srcObject = screenStream;
+
+        screenTrack.onended = () => {
+          Object.values(peerConnections).forEach(pc => {
+            const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+            if (sender && localStream) sender.replaceTrack(localStream.getVideoTracks()[0]);
+          });
+          document.getElementById('video-local').srcObject = localStream;
+        };
+      } catch (error) {
+        console.error('Screen share failed', error);
+      }
+    });
+
+    function leaveClass() {
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
+      socket.disconnect();
+      window.location.href = role === 'lecturer' ? 'lecturer-dashboard.html' : 'student-dashboard.html';
+    }
+
+    const attendanceOverlay = document.getElementById('attendanceOverlay');
+    const confirmAttendanceBtn = document.getElementById('confirmAttendanceBtn');
+    const endClassBtn = document.getElementById('endClassBtn');
+
+    let lastKnownPromptCount = 0;
+
+    if (role === 'lecturer' && liveClassId) {
+      endClassBtn.style.display = 'inline-block';
+
+      setInterval(async () => {
+        try {
+          await fetch(`http://localhost:5000/api/attendance/increment-prompt/${liveClassId}`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } catch (error) {
+          console.error('Failed to send prompt', error);
+        }
+      }, 2 * 60 * 1000); // every 2 minutes (testing)
+    }
+
+
+
+      
+
+      endClassBtn.addEventListener('click', async () => {
+  if (!confirm('End this live class? This will finalize attendance for all students.')) return;
+  try {
+    await fetch(`http://localhost:5000/api/attendance/finalize/${liveClassId}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    alert('Class ended and attendance finalized.');
+    window.location.href = `attendance-report.html?liveClassId=${liveClassId}&unit=${encodeURIComponent(unitName)}`;
+  } catch (error) {
+    alert('Failed to end class.');
+  }
+});
+
+    if (role === 'student' && liveClassId) {
+      setInterval(async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/liveclass/status/${unitId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await response.json();
+
+          if (!data.isActive) return;
+
+          const currentPromptCount = data.liveClass.totalPrompts;
+
+          if (currentPromptCount > lastKnownPromptCount) {
+            lastKnownPromptCount = currentPromptCount;
+            attendanceOverlay.style.display = 'flex';
+          }
+        } catch (error) {
+          console.error('Failed to check for prompts', error);
+        }
+      }, 10 * 1000); // check every 10 seconds (testing)
+
+      confirmAttendanceBtn.addEventListener('click', async () => {
+        try {
+          await fetch('http://localhost:5000/api/attendance/respond', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ liveClassId: liveClassId, promptIndex: lastKnownPromptCount - 1 }),
+          });
+        } catch (error) {
+          console.error('Failed to record attendance', error);
+        }
+        attendanceOverlay.style.display = 'none';
+      });
+    }
+  </script>
+
+</body>
+</html>
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  #topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.8rem 1rem;
+  }
+
+  #topbar .info {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  #topbar .buttons {
+    flex-wrap: wrap;
+  }
+
+  .video-box {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  video {
+    height: 40vh;
+  }
+
+  #attendanceBox {
+    max-width: 85%;
+  }
+}

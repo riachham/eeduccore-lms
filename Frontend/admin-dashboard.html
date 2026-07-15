@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Educore - Admin Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Educore</h2>
+    <nav>
+      <a href="admin-dashboard.html" class="active">Dashboard</a>
+      <a href="#">Manage Users</a>
+      <a href="#">Manage Courses</a>
+      <a href="#">Reports</a>
+    </nav>
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="main-content">
+    <div class="welcome-banner">
+      <h1 id="welcomeName">Welcome...</h1>
+      <p id="welcomeDetails">Loading your details...</p>
+    </div>
+
+    <div class="cards-grid" style="margin-bottom: 2rem;">
+      <div class="card">
+        <h3>Total Students</h3>
+        <div class="card-value">0</div>
+        <div class="card-note">Coming soon</div>
+      </div>
+
+      <div class="card">
+        <h3>Total Lecturers</h3>
+        <div class="card-value">0</div>
+        <div class="card-note">Coming soon</div>
+      </div>
+
+      <div class="card">
+        <h3>Total Courses</h3>
+        <div class="card-value">4</div>
+        <div class="card-note">Live</div>
+      </div>
+    </div>
+
+    <div class="form-panel">
+      <h2>Create New User</h2>
+
+      <form id="createUserForm">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" required />
+
+        <label for="email">Email</label>
+        <input type="email" id="email" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" required minlength="6" />
+
+        <label for="role">Role</label>
+        <select id="role" required>
+          <option value="">Select role</option>
+          <option value="lecturer">Lecturer</option>
+          <option value="admin">Admin</option>
+        </select>
+
+        <div id="departmentField" style="display:none;">
+          <label for="department">Department</label>
+          <select id="department">
+            <option value="">Select department</option>
+          </select>
+        </div>
+
+        <button type="submit">Create User</button>
+      </form>
+
+      <p id="createMessage"></p>
+    </div>
+  </div>
+
+  <script src="js/admin-dashboard.js"></script>
+</body>
+</html>

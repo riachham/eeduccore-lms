@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Educore - Student Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Educore</h2>
+    <nav>
+      <a href="student-dashboard.html" class="active">Dashboard</a>
+      <a href="#">Notes</a>
+      <a href="#">Assignments</a>
+      <a href="#">Live Classes</a>
+      <a href="#">Attendance</a>
+    </nav>
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="main-content">
+    <div class="welcome-banner">
+      <h1 id="welcomeName">Welcome...</h1>
+      <p id="welcomeDetails">Loading your details...</p>
+    </div>
+
+    <h2 style="color:#1a3c6e; margin-bottom:1rem;">My Units</h2>
+    <div class="units-grid" id="unitsGrid">
+      <p>Loading units...</p>
+    </div>
+
+    <!-- View Notes Modal -->
+    <div id="notesModal" class="modal-overlay" style="display:none;">
+      <div class="modal-box">
+        <h2>Notes</h2>
+        <p id="notesUnitName" style="color:#666; margin-bottom:1rem;"></p>
+
+        <div id="notesList">
+          <p>Loading notes...</p>
+        </div>
+
+        <button type="button" id="closeNotesModalBtn" style="background-color:#999; margin-top:1.5rem;">Close</button>
+      </div>
+    </div>
+
+    <!-- CAT Modal -->
+    <div id="catModal" class="modal-overlay" style="display:none;">
+      <div class="modal-box">
+        <h2>CAT</h2>
+        <p id="catUnitName" style="color:#666; margin-bottom:1rem;"></p>
+
+        <div id="catList">
+          <p>Loading CATs...</p>
+        </div>
+
+        <button type="button" id="closeCatModalBtn" style="background-color:#999; margin-top:1.5rem;">Close</button>
+      </div>
+    </div>
+
+    <!-- Submit CAT Modal -->
+    <div id="submitModal" class="modal-overlay" style="display:none;">
+      <div class="modal-box">
+        <h2>Submit CAT</h2>
+        <p id="submitCatTitle" style="color:#666; margin-bottom:1rem;"></p>
+
+        <form id="submitCatForm">
+          <label for="submitTextAnswer">Your Answer (text)</label>
+          <input type="text" id="submitTextAnswer" />
+
+          <label for="submitFile">Attach File (optional)</label>
+          <input type="file" id="submitFile" />
+
+          <div style="display:flex; gap:0.5rem; margin-top:1.5rem;">
+            <button type="submit">Submit</button>
+            <button type="button" id="closeSubmitModalBtn" style="background-color:#999;">Cancel</button>
+          </div>
+        </form>
+
+        <p id="submitMessage" style="margin-top:1rem;"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/student-dashboard.js"></script>
+</body>
+</html>
