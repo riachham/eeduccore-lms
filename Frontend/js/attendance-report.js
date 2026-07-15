@@ -14,7 +14,7 @@ const reportBody = document.getElementById('reportBody');
 
 async function loadReport() {
   try {
-    const response = await fetch(`http://localhost:5000/api/attendance/report/${liveClassId}`, {
+    const response = await fetch(`https://eeduccore-lms.onrender.com/api/attendance/report/${liveClassId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

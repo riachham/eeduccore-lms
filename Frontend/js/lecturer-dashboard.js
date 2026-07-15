@@ -1,7 +1,7 @@
-const API_URL = 'http://localhost:5000/api/auth';
-const UNITS_URL = 'http://localhost:5000/api/units/my-units';
-const UPLOAD_URL = 'http://localhost:5000/api/notes/upload';
-const CAT_CREATE_URL = 'http://localhost:5000/api/cats/create';
+const API_URL = 'https://eeduccore-lms.onrender.com/api/auth';
+const UNITS_URL = 'https://eeduccore-lms.onrender.com/api/units/my-units';
+const UPLOAD_URL = 'https://eeduccore-lms.onrender.com/api/notes/upload';
+const CAT_CREATE_URL = 'https://eeduccore-lms.onrender.com/api/cats/create';
 
 const welcomeName = document.getElementById('welcomeName');
 const welcomeDetails = document.getElementById('welcomeDetails');
@@ -203,7 +203,7 @@ createCatForm.addEventListener('submit', async (e) => {
 // Start Live Class
 async function startLiveClass(unitId, unitName) {
   try {
-    const response = await fetch('http://localhost:5000/api/liveclass/start', {
+    const response = await fetch('https://eeduccore-lms.onrender.com/api/liveclass/start', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -233,7 +233,7 @@ async function openAttendanceHistory(unitId, unitName) {
   attendanceHistoryModal.style.display = 'flex';
 
   try {
-    const response = await fetch(`http://localhost:5000/api/liveclass/history/${unitId}`, {
+    const response = await fetch(`https://eeduccore-lms.onrender.com/api/liveclass/history/${unitId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

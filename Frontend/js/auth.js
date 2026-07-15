@@ -1,5 +1,5 @@
-const API_URL = 'http://localhost:5000/api/auth';
-const COURSES_URL = 'http://localhost:5000/api/courses';
+const API_URL = 'https://eeduccore-lms.onrender.com/api/auth';
+const COURSES_URL = 'https://eeduccore-lms.onrender.com/api/courses';
 
 const registerForm = document.getElementById('registerForm');
 const message = document.getElementById('message');

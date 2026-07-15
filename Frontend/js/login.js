@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api/auth';
+const API_URL = 'https://eeduccore-lms.onrender.com/api/auth';
 
 const loginForm = document.getElementById('loginForm');
 const message = document.getElementById('message');

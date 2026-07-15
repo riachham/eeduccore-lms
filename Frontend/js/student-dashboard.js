@@ -1,8 +1,8 @@
-const API_URL = 'http://localhost:5000/api/auth';
-const UNITS_URL = 'http://localhost:5000/api/units/my-units';
-const NOTES_URL = 'http://localhost:5000/api/notes/unit';
-const CATS_URL = 'http://localhost:5000/api/cats/unit';
-const SUBMIT_URL = 'http://localhost:5000/api/cats';
+const API_URL = 'https://eeduccore-lms.onrender.com/api/auth';
+const UNITS_URL = 'https://eeduccore-lms.onrender.com/api/units/my-units';
+const NOTES_URL = 'https://eeduccore-lms.onrender.com/api/notes/unit';
+const CATS_URL = 'https://eeduccore-lms.onrender.com/api/cats/unit';
+const SUBMIT_URL = 'https://eeduccore-lms.onrender.com/api/cats';
 
 const welcomeName = document.getElementById('welcomeName');
 const welcomeDetails = document.getElementById('welcomeDetails');
@@ -116,7 +116,7 @@ async function openNotesModal(unitId, unitName) {
       <div style="padding:0.8rem 0; border-bottom:1px solid #eee;">
         <strong>${note.title}</strong><br/>
         <span style="font-size:0.85rem; color:#777;">Uploaded by ${note.uploadedBy.name}</span><br/>
-        <a href="http://localhost:5000/uploads/notes/${note.filePath}" target="_blank" style="color:#1a3c6e;">Download</a>
+        <a href="https://eeduccore-lms.onrender.com/uploads/notes/${note.filePath}" target="_blank" style="color:#1a3c6e;">Download</a>
       </div>
     `).join('');
 
@@ -163,7 +163,7 @@ async function openCatModal(unitId, unitName) {
           <span style="font-size:0.85rem; color:${isPastDeadline ? '#b02a2a' : '#777'};">
             Deadline: ${deadlineDate.toLocaleString()} ${isPastDeadline ? '(Passed)' : ''}
           </span><br/>
-          ${cat.filePath ? `<a href="http://localhost:5000/uploads/notes/${cat.filePath}" target="_blank" style="color:#1a3c6e;">Download Question File</a><br/>` : ''}
+          ${cat.filePath ? `<a href="https://eeduccore-lms.onrender.com/uploads/notes/${cat.filePath}" target="_blank" style="color:#1a3c6e;">Download Question File</a><br/>` : ''}
           <button onclick="openSubmitModal('${cat._id}', '${cat.title}')" style="margin-top:0.5rem; padding:0.4rem 1rem; background-color:#1a3c6e; color:white; border:none; border-radius:4px; cursor:pointer;">Submit</button>
         </div>
       `;
@@ -234,7 +234,7 @@ submitCatForm.addEventListener('submit', async (e) => {
 // Join Live Class
 async function joinLiveClass(unitId, unitName) {
   try {
-    const response = await fetch(`http://localhost:5000/api/liveclass/status/${unitId}`, {
+    const response = await fetch(`https://eeduccore-lms.onrender.com/api/liveclass/status/${unitId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

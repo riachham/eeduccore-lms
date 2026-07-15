@@ -135,7 +135,7 @@
     const token = localStorage.getItem('token');
     const role = user.role;
 
-    const socket = io('http://localhost:5000');
+    const socket = io('https://eeduccore-lms.onrender.com');
     const meetContainer = document.getElementById('meet-container');
 
     const peerConnections = {};
@@ -312,7 +312,7 @@
 
       setInterval(async () => {
         try {
-          await fetch(`http://localhost:5000/api/attendance/increment-prompt/${liveClassId}`, {
+          await fetch(`https://eeduccore-lms.onrender.com/api/attendance/increment-prompt/${liveClassId}`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -329,7 +329,7 @@
       endClassBtn.addEventListener('click', async () => {
   if (!confirm('End this live class? This will finalize attendance for all students.')) return;
   try {
-    await fetch(`http://localhost:5000/api/attendance/finalize/${liveClassId}`, {
+    await fetch(`https://eeduccore-lms.onrender.com/api/attendance/finalize/${liveClassId}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -343,7 +343,7 @@
     if (role === 'student' && liveClassId) {
       setInterval(async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/liveclass/status/${unitId}`, {
+          const response = await fetch(`https://eeduccore-lms.onrender.com/api/liveclass/status/${unitId}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           const data = await response.json();
@@ -363,7 +363,7 @@
 
       confirmAttendanceBtn.addEventListener('click', async () => {
         try {
-          await fetch('http://localhost:5000/api/attendance/respond', {
+          await fetch('https://eeduccore-lms.onrender.com/api/attendance/respond', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

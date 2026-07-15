@@ -1,5 +1,5 @@
-const API_URL = 'http://localhost:5000/api/auth';
-const DEPARTMENTS_URL = 'http://localhost:5000/api/departments';
+const API_URL = 'https://eeduccore-lms.onrender.com/api/auth';
+const DEPARTMENTS_URL = 'https://eeduccore-lms.onrender.com/api/departments';
 
 const welcomeName = document.getElementById('welcomeName');
 const welcomeDetails = document.getElementById('welcomeDetails');
