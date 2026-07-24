@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Educore - Verify Email</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="container">
+    <h1>Educore</h1>
+    <h2>Email Verification</h2>
+
+    <p id="statusMessage" style="text-align:center; margin-top:1.5rem;">Verifying your email...</p>
+
+    <p style="text-align:center; margin-top:1.5rem;">
+      <a href="login.html" id="loginLink" style="display:none;">Go to Login</a>
+    </p>
+  </div>
+
+  <script>
+    const API_URL = 'https://eeduccore-lms.onrender.com/api/auth';
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
+    const statusMessage = document.getElementById('statusMessage');
+    const loginLink = document.getElementById('loginLink');
+
+    async function verifyEmail() {
+      if (!token) {
+        statusMessage.textContent = 'Invalid verification link.';
+        statusMessage.style.color = 'red';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/verify-email/${token}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          statusMessage.textContent = data.message || 'Verification failed.';
+          statusMessage.style.color = 'red';
+          return;
+        }
+
+        statusMessage.textContent = data.message;
+        statusMessage.style.color = 'green';
+        loginLink.style.display = 'inline-block';
+
+      } catch (error) {
+        statusMessage.textContent = 'Something went wrong. Please try again.';
+        statusMessage.style.color = 'red';
+      }
+    }
+
+    verifyEmail();
+  </script>
+
+</body>
+</html>

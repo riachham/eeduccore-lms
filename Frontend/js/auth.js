@@ -63,12 +63,8 @@ registerForm.addEventListener('submit', async (e) => {
     }
 
     message.style.color = 'green';
-    message.textContent = 'Registration successful! Redirecting to login...';
-    registerForm.reset();
-
-    setTimeout(() => {
-      window.location.href = 'login.html';
-    }, 1500);
+message.textContent = data.message || 'Registration successful! Please check your email to verify your account.';
+registerForm.reset();
 
   } catch (error) {
     message.style.color = 'red';
