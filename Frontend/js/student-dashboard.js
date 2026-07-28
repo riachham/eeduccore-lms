@@ -3,6 +3,7 @@ const UNITS_URL = 'https://eeduccore-lms.onrender.com/api/units/my-units';
 const NOTES_URL = 'https://eeduccore-lms.onrender.com/api/notes/unit';
 const CATS_URL = 'https://eeduccore-lms.onrender.com/api/cats/unit';
 const SUBMIT_URL = 'https://eeduccore-lms.onrender.com/api/cats';
+const STATS_URL = 'https://eeduccore-lms.onrender.com/api/stats/student';
 
 const welcomeName = document.getElementById('welcomeName');
 const welcomeDetails = document.getElementById('welcomeDetails');
@@ -51,6 +52,34 @@ async function loadProfile() {
 
   } catch (error) {
     welcomeDetails.textContent = 'Failed to load profile.';
+  }
+}
+
+async function loadStats() {
+  try {
+    const response = await fetch(STATS_URL, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) return;
+
+    document.getElementById('statUnits').textContent = data.totalUnits;
+    document.getElementById('statNotes').textContent = data.totalNotes;
+    document.getElementById('statPendingCats').textContent = data.pendingCats;
+
+    if (data.nextDeadline) {
+      const deadlineDate = new Date(data.nextDeadline);
+      document.getElementById('statDeadline').textContent = deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      document.getElementById('statDeadlineLabel').textContent = data.nextDeadlineTitle;
+    } else {
+      document.getElementById('statDeadline').textContent = 'None';
+      document.getElementById('statDeadlineLabel').textContent = 'Next Deadline';
+    }
+
+  } catch (error) {
+    console.error('Failed to load stats', error);
   }
 }
 
@@ -223,6 +252,7 @@ submitCatForm.addEventListener('submit', async (e) => {
 
     setTimeout(() => {
       submitModal.style.display = 'none';
+      loadStats();
     }, 1200);
 
   } catch (error) {
@@ -253,6 +283,7 @@ async function joinLiveClass(unitId, unitName) {
 }
 
 loadProfile();
+loadStats();
 loadUnits();
 
 logoutBtn.addEventListener('click', () => {

@@ -15,6 +15,7 @@ const noteRoutes = require('./routes/notesRoutes');
 const catRoutes = require('./routes/catRoutes');
 const liveClassRoutes = require('./routes/liveClassRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
+const statsRoutes = require('./routes/statsRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -36,6 +37,7 @@ app.use('/api/notes', noteRoutes);
 app.use('/api/cats', catRoutes);
 app.use('/api/liveclass', liveClassRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/stats', statsRoutes);
 
 app.get('/', (req, res) => {
   res.send('Educore API is running');

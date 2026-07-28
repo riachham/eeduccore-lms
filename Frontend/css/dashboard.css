@@ -349,4 +349,53 @@ body {
   th, td {
     padding: 0.5rem;
   }
+}/* Polished stat cards */
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-left: 4px solid #1a3c6e;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+.stat-card .stat-icon {
+  font-size: 1.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.stat-card .stat-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1a3c6e;
+}
+
+.stat-card .stat-label {
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 0.3rem;
+}
+
+.stat-card.warning {
+  border-left-color: #d97706;
+}
+
+.stat-card.warning .stat-number {
+  color: #d97706;
+}
+
+/* Sidebar icons */
+.sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.sidebar nav a .nav-icon {
+  font-size: 1.1rem;
 }
