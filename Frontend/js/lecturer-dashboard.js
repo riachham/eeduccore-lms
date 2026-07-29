@@ -2,6 +2,7 @@ const API_URL = 'https://eeduccore-lms.onrender.com/api/auth';
 const UNITS_URL = 'https://eeduccore-lms.onrender.com/api/units/my-units';
 const UPLOAD_URL = 'https://eeduccore-lms.onrender.com/api/notes/upload';
 const CAT_CREATE_URL = 'https://eeduccore-lms.onrender.com/api/cats/create';
+const CATS_BASE_URL = 'https://eeduccore-lms.onrender.com/api/cats';
 
 const welcomeName = document.getElementById('welcomeName');
 const welcomeDetails = document.getElementById('welcomeDetails');
@@ -16,9 +17,21 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 
 const catModal = document.getElementById('catModal');
 const catUnitName = document.getElementById('catUnitName');
+const existingCatsList = document.getElementById('existingCatsList');
 const createCatForm = document.getElementById('createCatForm');
 const catMessage = document.getElementById('catMessage');
 const closeCatModalBtn = document.getElementById('closeCatModalBtn');
+
+const submissionsModal = document.getElementById('submissionsModal');
+const submissionsCatTitle = document.getElementById('submissionsCatTitle');
+const submissionsList = document.getElementById('submissionsList');
+const closeSubmissionsModalBtn = document.getElementById('closeSubmissionsModalBtn');
+
+const gradeModal = document.getElementById('gradeModal');
+const gradeStudentName = document.getElementById('gradeStudentName');
+const gradeForm = document.getElementById('gradeForm');
+const gradeMessage = document.getElementById('gradeMessage');
+const closeGradeModalBtn = document.getElementById('closeGradeModalBtn');
 
 const attendanceHistoryModal = document.getElementById('attendanceHistoryModal');
 const attendanceHistoryUnitName = document.getElementById('attendanceHistoryUnitName');
@@ -27,6 +40,8 @@ const closeAttendanceHistoryBtn = document.getElementById('closeAttendanceHistor
 
 const token = localStorage.getItem('token');
 let selectedUnitId = null;
+let selectedCatId = null;
+let selectedSubmissionId = null;
 
 if (!token) {
   window.location.href = 'login.html';
@@ -142,13 +157,46 @@ uploadNoteForm.addEventListener('submit', async (e) => {
   }
 });
 
-// CAT Modal
-function openCatModal(unitId, unitName) {
+// CAT Modal - now loads existing CATs too
+async function openCatModal(unitId, unitName) {
   selectedUnitId = unitId;
   catUnitName.textContent = `Unit: ${unitName}`;
   catMessage.textContent = '';
   createCatForm.reset();
   catModal.style.display = 'flex';
+  await loadExistingCats(unitId);
+}
+
+async function loadExistingCats(unitId) {
+  existingCatsList.innerHTML = '<p>Loading existing CATs...</p>';
+
+  try {
+    const response = await fetch(`${CATS_BASE_URL}/unit/${unitId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const cats = await response.json();
+
+    if (!response.ok) {
+      existingCatsList.innerHTML = `<p>${cats.message || 'Failed to load CATs'}</p>`;
+      return;
+    }
+
+    if (cats.length === 0) {
+      existingCatsList.innerHTML = '<p style="color:#999;">No CATs created yet for this unit.</p>';
+      return;
+    }
+
+    existingCatsList.innerHTML = cats.map(cat => `
+      <div style="padding:0.6rem 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+        <span>${cat.title}</span>
+        <button onclick="openSubmissionsModal('${cat._id}', '${cat.title.replace(/'/g, "\\'")}')" style="padding:0.4rem 0.9rem; background-color:#1a3c6e; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem;">View Submissions</button>
+      </div>
+    `).join('');
+
+  } catch (error) {
+    existingCatsList.innerHTML = '<p>Failed to load CATs.</p>';
+  }
 }
 
 closeCatModalBtn.addEventListener('click', () => {
@@ -189,14 +237,112 @@ createCatForm.addEventListener('submit', async (e) => {
 
     catMessage.style.color = 'green';
     catMessage.textContent = 'CAT created successfully!';
-
-    setTimeout(() => {
-      catModal.style.display = 'none';
-    }, 1200);
+    createCatForm.reset();
+    await loadExistingCats(selectedUnitId);
 
   } catch (error) {
     catMessage.style.color = 'red';
     catMessage.textContent = 'Something went wrong.';
+  }
+});
+
+// Submissions Modal
+async function openSubmissionsModal(catId, catTitle) {
+  selectedCatId = catId;
+  submissionsCatTitle.textContent = `CAT: ${catTitle}`;
+  submissionsList.innerHTML = '<p>Loading submissions...</p>';
+  submissionsModal.style.display = 'flex';
+
+  try {
+    const response = await fetch(`${CATS_BASE_URL}/${catId}/submissions`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const submissions = await response.json();
+
+    if (!response.ok) {
+      submissionsList.innerHTML = `<p>${submissions.message || 'Failed to load submissions'}</p>`;
+      return;
+    }
+
+    if (submissions.length === 0) {
+      submissionsList.innerHTML = '<p>No submissions yet for this CAT.</p>';
+      return;
+    }
+
+    submissionsList.innerHTML = submissions.map(sub => `
+      <div style="padding:0.8rem 0; border-bottom:1px solid #eee;">
+        <strong>${sub.student.name}</strong> (${sub.student.admissionNumber || 'N/A'})
+        ${sub.isLate ? '<span style="color:#b02a2a; font-size:0.8rem;"> (Late)</span>' : ''}<br/>
+        ${sub.textAnswer ? `<p style="font-size:0.85rem; color:#555; margin:0.3rem 0;">${sub.textAnswer}</p>` : ''}
+        ${sub.filePath ? `<a href="https://eeduccore-lms.onrender.com/uploads/notes/${sub.filePath}" target="_blank" style="color:#1a3c6e; font-size:0.85rem;">Download File</a><br/>` : ''}
+        <span style="font-size:0.85rem; color:#777;">
+          ${sub.grade !== undefined && sub.grade !== null ? `Grade: <strong>${sub.grade}/100</strong>` : 'Not graded yet'}
+        </span>
+        <button onclick="openGradeModal('${sub._id}', '${sub.student.name.replace(/'/g, "\\'")}', ${sub.grade ?? 'null'}, '${(sub.feedback || '').replace(/'/g, "\\'")}')" style="margin-left:0.8rem; padding:0.3rem 0.8rem; background-color:#1a3c6e; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">
+          ${sub.grade !== undefined && sub.grade !== null ? 'Edit Grade' : 'Grade'}
+        </button>
+      </div>
+    `).join('');
+
+  } catch (error) {
+    submissionsList.innerHTML = '<p>Failed to load submissions.</p>';
+  }
+}
+
+closeSubmissionsModalBtn.addEventListener('click', () => {
+  submissionsModal.style.display = 'none';
+});
+
+// Grade Modal
+function openGradeModal(submissionId, studentName, existingGrade, existingFeedback) {
+  selectedSubmissionId = submissionId;
+  gradeStudentName.textContent = `Student: ${studentName}`;
+  gradeMessage.textContent = '';
+  document.getElementById('gradeValue').value = existingGrade !== null ? existingGrade : '';
+  document.getElementById('gradeFeedback').value = existingFeedback || '';
+  gradeModal.style.display = 'flex';
+}
+
+closeGradeModalBtn.addEventListener('click', () => {
+  gradeModal.style.display = 'none';
+});
+
+gradeForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const grade = document.getElementById('gradeValue').value;
+  const feedback = document.getElementById('gradeFeedback').value;
+
+  try {
+    const response = await fetch(`${CATS_BASE_URL}/submissions/${selectedSubmissionId}/grade`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ grade: Number(grade), feedback }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      gradeMessage.style.color = 'red';
+      gradeMessage.textContent = data.message || 'Failed to save grade';
+      return;
+    }
+
+    gradeMessage.style.color = 'green';
+    gradeMessage.textContent = 'Grade saved successfully!';
+
+    setTimeout(async () => {
+      gradeModal.style.display = 'none';
+      await openSubmissionsModal(selectedCatId, submissionsCatTitle.textContent.replace('CAT: ', ''));
+    }, 1000);
+
+  } catch (error) {
+    gradeMessage.style.color = 'red';
+    gradeMessage.textContent = 'Something went wrong.';
   }
 });
 

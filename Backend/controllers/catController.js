@@ -100,5 +100,34 @@ const getSubmissionsByCAT = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// @desc   Grade a student's submission (lecturer only)
+// @route  PUT /api/cats/submissions/:submissionId/grade
+const gradeSubmission = async (req, res) => {
+  try {
+    const { grade, feedback } = req.body;
 
-module.exports = { createCAT, getCATsByUnit, submitCAT, getSubmissionsByCAT };
+    if (grade === undefined || grade < 0 || grade > 100) {
+      return res.status(400).json({ message: 'Grade must be between 0 and 100' });
+    }
+
+    const submission = await Submission.findById(req.params.submissionId).populate('cat');
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' });
+    }
+
+    // Verify this lecturer created the CAT this submission belongs to
+    if (String(submission.cat.createdBy) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'You can only grade submissions for your own CATs' });
+    }
+
+    submission.grade = grade;
+    submission.feedback = feedback || '';
+    submission.gradedAt = new Date();
+    await submission.save();
+
+    res.status(200).json(submission);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+module.exports = { createCAT, getCATsByUnit, submitCAT, getSubmissionsByCAT, gradeSubmission };

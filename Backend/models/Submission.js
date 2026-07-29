@@ -26,6 +26,18 @@ const submissionSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    grade: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    feedback: {
+      type: String,
+      trim: true,
+    },
+    gradedAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
