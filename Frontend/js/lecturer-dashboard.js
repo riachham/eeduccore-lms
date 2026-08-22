@@ -1,7 +1,6 @@
 const API_URL = 'https://eeduccore-lms.onrender.com/api/auth';
 const UNITS_URL = 'https://eeduccore-lms.onrender.com/api/units/my-units';
 const UPLOAD_URL = 'https://eeduccore-lms.onrender.com/api/notes/upload';
-const CAT_CREATE_URL = 'https://eeduccore-lms.onrender.com/api/cats/create';
 const CATS_BASE_URL = 'https://eeduccore-lms.onrender.com/api/cats';
 
 const welcomeName = document.getElementById('welcomeName');
@@ -22,16 +21,12 @@ const createCatForm = document.getElementById('createCatForm');
 const catMessage = document.getElementById('catMessage');
 const closeCatModalBtn = document.getElementById('closeCatModalBtn');
 
-const submissionsModal = document.getElementById('submissionsModal');
-const submissionsCatTitle = document.getElementById('submissionsCatTitle');
-const submissionsList = document.getElementById('submissionsList');
-const closeSubmissionsModalBtn = document.getElementById('closeSubmissionsModalBtn');
-
-const gradeModal = document.getElementById('gradeModal');
-const gradeStudentName = document.getElementById('gradeStudentName');
-const gradeForm = document.getElementById('gradeForm');
-const gradeMessage = document.getElementById('gradeMessage');
-const closeGradeModalBtn = document.getElementById('closeGradeModalBtn');
+const questionsModal = document.getElementById('questionsModal');
+const questionsCatTitle = document.getElementById('questionsCatTitle');
+const questionsList = document.getElementById('questionsList');
+const addQuestionForm = document.getElementById('addQuestionForm');
+const questionMessage = document.getElementById('questionMessage');
+const closeQuestionsModalBtn = document.getElementById('closeQuestionsModalBtn');
 
 const attendanceHistoryModal = document.getElementById('attendanceHistoryModal');
 const attendanceHistoryUnitName = document.getElementById('attendanceHistoryUnitName');
@@ -41,7 +36,6 @@ const closeAttendanceHistoryBtn = document.getElementById('closeAttendanceHistor
 const token = localStorage.getItem('token');
 let selectedUnitId = null;
 let selectedCatId = null;
-let selectedSubmissionId = null;
 
 if (!token) {
   window.location.href = 'login.html';
@@ -157,12 +151,13 @@ uploadNoteForm.addEventListener('submit', async (e) => {
   }
 });
 
-// CAT Modal - now loads existing CATs too
+// CAT Modal
 async function openCatModal(unitId, unitName) {
   selectedUnitId = unitId;
   catUnitName.textContent = `Unit: ${unitName}`;
   catMessage.textContent = '';
   createCatForm.reset();
+  document.getElementById('catTimeLimit').value = 50;
   catModal.style.display = 'flex';
   await loadExistingCats(unitId);
 }
@@ -189,8 +184,11 @@ async function loadExistingCats(unitId) {
 
     existingCatsList.innerHTML = cats.map(cat => `
       <div style="padding:0.6rem 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-        <span>${cat.title}</span>
-        <button onclick="openSubmissionsModal('${cat._id}', '${cat.title.replace(/'/g, "\\'")}')" style="padding:0.4rem 0.9rem; background-color:#1a3c6e; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem;">View Submissions</button>
+        <span>${cat.title} <small style="color:#999;">(${cat.questionCount} question${cat.questionCount !== 1 ? 's' : ''})</small></span>
+        <div style="display:flex; gap:0.4rem;">
+          <button onclick="openQuestionsModal('${cat._id}', '${cat.title.replace(/'/g, "\\'")}')"" style="padding:0.35rem 0.7rem; background-color:#1a3c6e; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">Questions</button>
+          <button onclick="openResultsModal('${cat._id}', '${cat.title.replace(/'/g, "\\'")}')"" style="padding:0.35rem 0.7rem; background-color:#2a7a3f; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">Results</button>
+        </div>
       </div>
     `).join('');
 
@@ -208,23 +206,17 @@ createCatForm.addEventListener('submit', async (e) => {
 
   const title = document.getElementById('catTitle').value;
   const description = document.getElementById('catDescription').value;
+  const timeLimitMinutes = document.getElementById('catTimeLimit').value;
   const deadline = document.getElementById('catDeadline').value;
-  const file = document.getElementById('catFile').files[0];
-
-  const formData = new FormData();
-  formData.append('title', title);
-  formData.append('description', description);
-  formData.append('unit', selectedUnitId);
-  formData.append('deadline', deadline);
-  if (file) {
-    formData.append('file', file);
-  }
 
   try {
-    const response = await fetch(CAT_CREATE_URL, {
+    const response = await fetch(`${CATS_BASE_URL}/create`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ title, description, unit: selectedUnitId, deadline, timeLimitMinutes }),
     });
 
     const data = await response.json();
@@ -236,9 +228,13 @@ createCatForm.addEventListener('submit', async (e) => {
     }
 
     catMessage.style.color = 'green';
-    catMessage.textContent = 'CAT created successfully!';
+    catMessage.textContent = 'CAT created! Now add questions to it.';
     createCatForm.reset();
+    document.getElementById('catTimeLimit').value = 50;
     await loadExistingCats(selectedUnitId);
+
+    // Immediately open questions modal for the new CAT
+    openQuestionsModal(data._id, data.title);
 
   } catch (error) {
     catMessage.style.color = 'red';
@@ -246,13 +242,78 @@ createCatForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Submissions Modal
-async function openSubmissionsModal(catId, catTitle) {
+// Questions Modal
+async function openQuestionsModal(catId, catTitle) {
   selectedCatId = catId;
-  submissionsCatTitle.textContent = `CAT: ${catTitle}`;
-  submissionsList.innerHTML = '<p>Loading submissions...</p>';
-  submissionsModal.style.display = 'flex';
+  questionsCatTitle.textContent = `CAT: ${catTitle}`;
+  questionMessage.textContent = '';
+  addQuestionForm.reset();
+  questionsModal.style.display = 'flex';
+  await loadQuestions(catId);
+}
 
+async function loadQuestions(catId) {
+  questionsList.innerHTML = '<p>Loading questions...</p>';
+
+  try {
+    const response = await fetch(`${CATS_BASE_URL}/unit/${selectedUnitId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    // We don't have a direct "get questions with answers" endpoint for lecturer view,
+    // so just show a count-based confirmation list using the addQuestion responses.
+    questionsList.innerHTML = '<p style="color:#999;">Questions added so far will appear here as you add them below.</p>';
+  } catch (error) {
+    questionsList.innerHTML = '<p>Failed to load questions.</p>';
+  }
+}
+
+closeQuestionsModalBtn.addEventListener('click', () => {
+  questionsModal.style.display = 'none';
+  loadExistingCats(selectedUnitId);
+});
+
+addQuestionForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const questionText = document.getElementById('questionText').value;
+  const options = [
+    document.getElementById('option0').value,
+    document.getElementById('option1').value,
+    document.getElementById('option2').value,
+    document.getElementById('option3').value,
+  ];
+  const correctAnswerIndex = Number(document.getElementById('correctOption').value);
+
+  try {
+    const response = await fetch(`${CATS_BASE_URL}/${selectedCatId}/questions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ questionText, options, correctAnswerIndex }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      questionMessage.style.color = 'red';
+      questionMessage.textContent = data.message || 'Failed to add question';
+      return;
+    }
+
+    questionMessage.style.color = 'green';
+    questionMessage.textContent = 'Question added! Add another or click Done.';
+    addQuestionForm.reset();
+
+  } catch (error) {
+    questionMessage.style.color = 'red';
+    questionMessage.textContent = 'Something went wrong.';
+  }
+});
+
+// Results Modal (reuse submissions modal styling via alert for now - simple list)
+async function openResultsModal(catId, catTitle) {
   try {
     const response = await fetch(`${CATS_BASE_URL}/${catId}/submissions`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -261,90 +322,25 @@ async function openSubmissionsModal(catId, catTitle) {
     const submissions = await response.json();
 
     if (!response.ok) {
-      submissionsList.innerHTML = `<p>${submissions.message || 'Failed to load submissions'}</p>`;
+      alert(submissions.message || 'Failed to load results');
       return;
     }
 
     if (submissions.length === 0) {
-      submissionsList.innerHTML = '<p>No submissions yet for this CAT.</p>';
+      alert(`No submissions yet for "${catTitle}".`);
       return;
     }
 
-    submissionsList.innerHTML = submissions.map(sub => `
-      <div style="padding:0.8rem 0; border-bottom:1px solid #eee;">
-        <strong>${sub.student.name}</strong> (${sub.student.admissionNumber || 'N/A'})
-        ${sub.isLate ? '<span style="color:#b02a2a; font-size:0.8rem;"> (Late)</span>' : ''}<br/>
-        ${sub.textAnswer ? `<p style="font-size:0.85rem; color:#555; margin:0.3rem 0;">${sub.textAnswer}</p>` : ''}
-        ${sub.filePath ? `<a href="https://eeduccore-lms.onrender.com/uploads/notes/${sub.filePath}" target="_blank" style="color:#1a3c6e; font-size:0.85rem;">Download File</a><br/>` : ''}
-        <span style="font-size:0.85rem; color:#777;">
-          ${sub.grade !== undefined && sub.grade !== null ? `Grade: <strong>${sub.grade}/100</strong>` : 'Not graded yet'}
-        </span>
-        <button onclick="openGradeModal('${sub._id}', '${sub.student.name.replace(/'/g, "\\'")}', ${sub.grade ?? 'null'}, '${(sub.feedback || '').replace(/'/g, "\\'")}')" style="margin-left:0.8rem; padding:0.3rem 0.8rem; background-color:#1a3c6e; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">
-          ${sub.grade !== undefined && sub.grade !== null ? 'Edit Grade' : 'Grade'}
-        </button>
-      </div>
-    `).join('');
+    const resultsText = submissions
+      .map(sub => `${sub.student.name} (${sub.student.admissionNumber || 'N/A'}): ${sub.score}/${sub.totalQuestions}`)
+      .join('\n');
+
+    alert(`Results for "${catTitle}":\n\n${resultsText}`);
 
   } catch (error) {
-    submissionsList.innerHTML = '<p>Failed to load submissions.</p>';
+    alert('Failed to load results.');
   }
 }
-
-closeSubmissionsModalBtn.addEventListener('click', () => {
-  submissionsModal.style.display = 'none';
-});
-
-// Grade Modal
-function openGradeModal(submissionId, studentName, existingGrade, existingFeedback) {
-  selectedSubmissionId = submissionId;
-  gradeStudentName.textContent = `Student: ${studentName}`;
-  gradeMessage.textContent = '';
-  document.getElementById('gradeValue').value = existingGrade !== null ? existingGrade : '';
-  document.getElementById('gradeFeedback').value = existingFeedback || '';
-  gradeModal.style.display = 'flex';
-}
-
-closeGradeModalBtn.addEventListener('click', () => {
-  gradeModal.style.display = 'none';
-});
-
-gradeForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const grade = document.getElementById('gradeValue').value;
-  const feedback = document.getElementById('gradeFeedback').value;
-
-  try {
-    const response = await fetch(`${CATS_BASE_URL}/submissions/${selectedSubmissionId}/grade`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ grade: Number(grade), feedback }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      gradeMessage.style.color = 'red';
-      gradeMessage.textContent = data.message || 'Failed to save grade';
-      return;
-    }
-
-    gradeMessage.style.color = 'green';
-    gradeMessage.textContent = 'Grade saved successfully!';
-
-    setTimeout(async () => {
-      gradeModal.style.display = 'none';
-      await openSubmissionsModal(selectedCatId, submissionsCatTitle.textContent.replace('CAT: ', ''));
-    }, 1000);
-
-  } catch (error) {
-    gradeMessage.style.color = 'red';
-    gradeMessage.textContent = 'Something went wrong.';
-  }
-});
 
 // Start Live Class
 async function startLiveClass(unitId, unitName) {

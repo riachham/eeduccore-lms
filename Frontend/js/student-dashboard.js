@@ -2,7 +2,6 @@ const API_URL = 'https://eeduccore-lms.onrender.com/api/auth';
 const UNITS_URL = 'https://eeduccore-lms.onrender.com/api/units/my-units';
 const NOTES_URL = 'https://eeduccore-lms.onrender.com/api/notes/unit';
 const CATS_URL = 'https://eeduccore-lms.onrender.com/api/cats/unit';
-const SUBMIT_URL = 'https://eeduccore-lms.onrender.com/api/cats';
 const STATS_URL = 'https://eeduccore-lms.onrender.com/api/stats/student';
 
 const welcomeName = document.getElementById('welcomeName');
@@ -20,14 +19,7 @@ const catUnitName = document.getElementById('catUnitName');
 const catList = document.getElementById('catList');
 const closeCatModalBtn = document.getElementById('closeCatModalBtn');
 
-const submitModal = document.getElementById('submitModal');
-const submitCatTitle = document.getElementById('submitCatTitle');
-const submitCatForm = document.getElementById('submitCatForm');
-const submitMessage = document.getElementById('submitMessage');
-const closeSubmitModalBtn = document.getElementById('closeSubmitModalBtn');
-
 const token = localStorage.getItem('token');
-let selectedCatId = null;
 
 if (!token) {
   window.location.href = 'login.html';
@@ -189,11 +181,15 @@ async function openCatModal(unitId, unitName) {
         <div style="padding:0.8rem 0; border-bottom:1px solid #eee;">
           <strong>${cat.title}</strong><br/>
           <span style="font-size:0.85rem; color:#777;">${cat.description || ''}</span><br/>
+          <span style="font-size:0.85rem; color:#777;">
+            ${cat.questionCount || 0} question${cat.questionCount === 1 ? '' : 's'} | Time limit: ${cat.timeLimitMinutes} min
+          </span><br/>
           <span style="font-size:0.85rem; color:${isPastDeadline ? '#b02a2a' : '#777'};">
             Deadline: ${deadlineDate.toLocaleString()} ${isPastDeadline ? '(Passed)' : ''}
           </span><br/>
-          ${cat.filePath ? `<a href="https://eeduccore-lms.onrender.com/uploads/notes/${cat.filePath}" target="_blank" style="color:#1a3c6e;">Download Question File</a><br/>` : ''}
-          <button onclick="openSubmitModal('${cat._id}', '${cat.title}')" style="margin-top:0.5rem; padding:0.4rem 1rem; background-color:#1a3c6e; color:white; border:none; border-radius:4px; cursor:pointer;">Submit</button>
+          <button onclick="window.location.href='takeCat.html?catId=${cat._id}'" ${isPastDeadline || !cat.questionCount ? 'disabled' : ''} style="margin-top:0.5rem; padding:0.4rem 1rem; background-color:${isPastDeadline || !cat.questionCount ? '#ccc' : '#1a3c6e'}; color:white; border:none; border-radius:4px; cursor:${isPastDeadline || !cat.questionCount ? 'not-allowed' : 'pointer'};">
+            ${isPastDeadline ? 'Deadline Passed' : (!cat.questionCount ? 'No Questions Yet' : 'Start CAT')}
+          </button>
         </div>
       `;
     }).join('');
@@ -205,60 +201,6 @@ async function openCatModal(unitId, unitName) {
 
 closeCatModalBtn.addEventListener('click', () => {
   catModal.style.display = 'none';
-});
-
-// Submit CAT Modal
-function openSubmitModal(catId, catTitle) {
-  selectedCatId = catId;
-  submitCatTitle.textContent = `CAT: ${catTitle}`;
-  submitMessage.textContent = '';
-  submitCatForm.reset();
-  submitModal.style.display = 'flex';
-}
-
-closeSubmitModalBtn.addEventListener('click', () => {
-  submitModal.style.display = 'none';
-});
-
-submitCatForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const textAnswer = document.getElementById('submitTextAnswer').value;
-  const file = document.getElementById('submitFile').files[0];
-
-  const formData = new FormData();
-  formData.append('textAnswer', textAnswer);
-  if (file) {
-    formData.append('file', file);
-  }
-
-  try {
-    const response = await fetch(`${SUBMIT_URL}/${selectedCatId}/submit`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      submitMessage.style.color = 'red';
-      submitMessage.textContent = data.message || 'Submission failed';
-      return;
-    }
-
-    submitMessage.style.color = 'green';
-    submitMessage.textContent = 'Submitted successfully!';
-
-    setTimeout(() => {
-      submitModal.style.display = 'none';
-      loadStats();
-    }, 1200);
-
-  } catch (error) {
-    submitMessage.style.color = 'red';
-    submitMessage.textContent = 'Something went wrong.';
-  }
 });
 
 // Join Live Class

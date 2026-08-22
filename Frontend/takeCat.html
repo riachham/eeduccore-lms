@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Educore - Take CAT</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { background-color: #f4f6f8; min-height: 100vh; }
+
+    #topbar {
+      background-color: #1a3c6e;
+      color: white;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #timer {
+      background-color: rgba(255,255,255,0.15);
+      padding: 0.5rem 1.2rem;
+      border-radius: 20px;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    #timer.warning {
+      background-color: #b02a2a;
+    }
+
+    .container {
+      max-width: 650px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    #loadingMsg, #errorMsg, #resultBox {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .question-box {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .question-progress {
+      font-size: 0.85rem;
+      color: #777;
+      margin-bottom: 1rem;
+    }
+
+    .question-text {
+      font-size: 1.15rem;
+      color: #1a3c6e;
+      margin-bottom: 1.5rem;
+    }
+
+    .option {
+      display: block;
+      padding: 0.9rem 1.2rem;
+      border: 2px solid #eee;
+      border-radius: 8px;
+      margin-bottom: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .option:hover {
+      border-color: #1a3c6e;
+    }
+
+    .option.selected {
+      border-color: #1a3c6e;
+      background-color: #eaf0f9;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+    }
+
+    .nav-buttons button {
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    #prevBtn { background-color: #999; color: white; }
+    #nextBtn { background-color: #1a3c6e; color: white; }
+    #submitBtn { background-color: #2a7a3f; color: white; }
+
+    #resultBox .score {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #1a3c6e;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="topbar">
+    <h2 id="catTitle">Loading CAT...</h2>
+    <div id="timer">--:--</div>
+  </div>
+
+  <div class="container">
+    <div id="loadingMsg">
+      <p>Loading questions...</p>
+    </div>
+
+    <div id="questionArea" style="display:none;">
+      <div class="question-box">
+        <div class="question-progress" id="questionProgress"></div>
+        <div class="question-text" id="questionText"></div>
+        <div id="optionsContainer"></div>
+
+        <div class="nav-buttons">
+          <button id="prevBtn">Previous</button>
+          <button id="nextBtn">Next</button>
+          <button id="submitBtn" style="display:none;">Submit CAT</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultBox" style="display:none;">
+      <h2>CAT Submitted!</h2>
+      <div class="score" id="finalScore"></div>
+      <p>Great job! Your score has been recorded.</p>
+      <button onclick="window.location.href='student-dashboard.html'" style="margin-top:1.5rem; padding:0.8rem 2rem; background-color:#1a3c6e; color:white; border:none; border-radius:6px; cursor:pointer; font-size:1rem;">Back to Dashboard</button>
+    </div>
+  </div>
+
+  <script src="js/takeCat.js"></script>
+</body>
+</html>

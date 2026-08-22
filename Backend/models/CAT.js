@@ -21,11 +21,10 @@ const catSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    fileName: {
-      type: String,
-    },
-    filePath: {
-      type: String,
+    timeLimitMinutes: {
+      type: Number,
+      required: true,
+      default: 50,
     },
     deadline: {
       type: Date,

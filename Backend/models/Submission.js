@@ -12,30 +12,31 @@ const submissionSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    textAnswer: {
-      type: String,
-      trim: true,
+    answers: [
+      {
+        question: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Question',
+        },
+        selectedIndex: {
+          type: Number,
+        },
+      },
+    ],
+    score: {
+      type: Number,
     },
-    fileName: {
-      type: String,
-    },
-    filePath: {
-      type: String,
+    totalQuestions: {
+      type: Number,
     },
     isLate: {
       type: Boolean,
       default: false,
     },
-    grade: {
-      type: Number,
-      min: 0,
-      max: 100,
+    startedAt: {
+      type: Date,
     },
-    feedback: {
-      type: String,
-      trim: true,
-    },
-    gradedAt: {
+    submittedAt: {
       type: Date,
     },
   },
