@@ -3,6 +3,7 @@ const UNITS_URL = 'https://eeduccore-lms.onrender.com/api/units/my-units';
 const NOTES_URL = 'https://eeduccore-lms.onrender.com/api/notes/unit';
 const CATS_URL = 'https://eeduccore-lms.onrender.com/api/cats/unit';
 const STATS_URL = 'https://eeduccore-lms.onrender.com/api/stats/student';
+const LIVECLASS_STATUS_URL = 'https://eeduccore-lms.onrender.com/api/liveclass/status';
 
 const welcomeName = document.getElementById('welcomeName');
 const welcomeDetails = document.getElementById('welcomeDetails');
@@ -75,6 +76,43 @@ async function loadStats() {
   }
 }
 
+// Check if a unit has an active live class or any open CAT
+async function checkUnitAlerts(unitId) {
+  let hasAlert = false;
+  let alertText = '';
+
+  try {
+    // Check live class
+    const liveResponse = await fetch(`${LIVECLASS_STATUS_URL}/${unitId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const liveData = await liveResponse.json();
+    if (liveData.isActive) {
+      hasAlert = true;
+      alertText = 'LIVE';
+    }
+
+    // Check CATs (only if no live class alert already)
+    if (!hasAlert) {
+      const catResponse = await fetch(`${CATS_URL}/${unitId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const cats = await catResponse.json();
+      if (Array.isArray(cats)) {
+        const hasOpenCat = cats.some(cat => new Date(cat.deadline) > new Date() && cat.questionCount > 0);
+        if (hasOpenCat) {
+          hasAlert = true;
+          alertText = 'CAT';
+        }
+      }
+    }
+  } catch (error) {
+    // Silently ignore alert-check failures, not critical
+  }
+
+  return { hasAlert, alertText };
+}
+
 async function loadUnits() {
   try {
     const response = await fetch(UNITS_URL, {
@@ -93,8 +131,9 @@ async function loadUnits() {
       return;
     }
 
+    // Render units first without badges
     unitsGrid.innerHTML = units.map(unit => `
-      <div class="unit-card">
+      <div class="unit-card" id="unit-card-${unit._id}">
         <h3>${unit.name}</h3>
         <div class="unit-code">${unit.code}</div>
         <div class="unit-actions">
@@ -104,6 +143,20 @@ async function loadUnits() {
         </div>
       </div>
     `).join('');
+
+    // Then check each unit for alerts and add badges asynchronously
+    units.forEach(async (unit) => {
+      const { hasAlert, alertText } = await checkUnitAlerts(unit._id);
+      if (hasAlert) {
+        const card = document.getElementById(`unit-card-${unit._id}`);
+        if (card) {
+          const badge = document.createElement('div');
+          badge.className = 'notification-badge';
+          badge.textContent = alertText;
+          card.appendChild(badge);
+        }
+      }
+    });
 
   } catch (error) {
     unitsGrid.innerHTML = '<p>Failed to load units.</p>';
@@ -206,7 +259,7 @@ closeCatModalBtn.addEventListener('click', () => {
 // Join Live Class
 async function joinLiveClass(unitId, unitName) {
   try {
-    const response = await fetch(`https://eeduccore-lms.onrender.com/api/liveclass/status/${unitId}`, {
+    const response = await fetch(`${LIVECLASS_STATUS_URL}/${unitId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
