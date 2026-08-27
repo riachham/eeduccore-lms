@@ -136,6 +136,9 @@
     const role = user.role;
 
     const socket = io('https://eeduccore-lms.onrender.com');
+        socket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err.message);
+    });
     const meetContainer = document.getElementById('meet-container');
 
     const peerConnections = {};
@@ -216,6 +219,9 @@
         if (pc.connectionState === 'connected') {
           setTimeout(updateParticipantCount, 500);
         }
+      };
+            pc.oniceconnectionstatechange = () => {
+        console.log(`[ICE state for ${targetId}]`, pc.iceConnectionState);
       };
 
       peerConnections[targetId] = pc;
