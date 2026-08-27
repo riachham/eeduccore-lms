@@ -102,20 +102,38 @@ async function checkUnitAlerts(unitId) {
   return { hasLiveClass, hasOpenCat };
 }
 
-    // Render units first without badges
+async function loadUnits() {
+  try {
+    const response = await fetch(UNITS_URL, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const units = await response.json();
+
+    if (!response.ok) {
+      unitsGrid.innerHTML = `<p>${units.message || 'Failed to load units'}</p>`;
+      return;
+    }
+
+    if (units.length === 0) {
+      unitsGrid.innerHTML = '<p>No units found for your course.</p>';
+      return;
+    }
+
+    // Render units first
     unitsGrid.innerHTML = units.map(unit => `
       <div class="unit-card" id="unit-card-${unit._id}">
         <h3>${unit.name}</h3>
         <div class="unit-code">${unit.code}</div>
         <div class="unit-actions">
-         <button data-btn="live" onclick="joinLiveClass('${unit._id}', '${unit.name}')">Join Live Class</button>
+          <button data-btn="live" onclick="joinLiveClass('${unit._id}', '${unit.name}')">Join Live Class</button>
           <button onclick="openNotesModal('${unit._id}', '${unit.name}')">View Notes</button>
           <button data-btn="cat" onclick="openCatModal('${unit._id}', '${unit.name}')">View CAT</button>
         </div>
       </div>
     `).join('');
 
-        // Then check each unit for alerts and highlight the relevant button
+    // Then check each unit for alerts and highlight the relevant button
     units.forEach(async (unit) => {
       const { hasLiveClass, hasOpenCat } = await checkUnitAlerts(unit._id);
       const card = document.getElementById(`unit-card-${unit._id}`);
@@ -131,6 +149,11 @@ async function checkUnitAlerts(unitId) {
         if (catBtn) catBtn.classList.add('alert-btn');
       }
     });
+
+  } catch (error) {
+    unitsGrid.innerHTML = '<p>Failed to load units.</p>';
+  }
+}
 
 // Notes Modal
 async function openNotesModal(unitId, unitName) {
