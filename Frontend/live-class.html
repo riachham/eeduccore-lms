@@ -139,9 +139,15 @@
     const meetContainer = document.getElementById('meet-container');
 
     const peerConnections = {};
-    let localStream = null;
+       let localStream = null;
     let screenStream = null;
+    let isScreenSharing = false;
 
+    function getActiveVideoTrack() {
+      if (isScreenSharing && screenStream) return screenStream.getVideoTracks()[0];
+      if (localStream) return localStream.getVideoTracks()[0];
+      return null;
+    }
     const iceServers = {
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
     };
@@ -191,16 +197,14 @@
       }
     }
 
-    function createPeerConnection(targetId) {
+        function createPeerConnection(targetId) {
       const pc = new RTCPeerConnection(iceServers);
 
       if (localStream) {
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+        localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
+        const videoTrack = getActiveVideoTrack();
+        if (videoTrack) pc.addTrack(videoTrack, isScreenSharing ? screenStream : localStream);
       }
-
-      pc.ontrack = (event) => {
-        addVideoBox(targetId, event.streams[0], 'Participant');
-      };
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -271,27 +275,42 @@
     });
 
     // Screen sharing
-    document.getElementById('shareBtn').addEventListener('click', async () => {
+       document.getElementById('shareBtn').addEventListener('click', async () => {
       try {
         screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
         const screenTrack = screenStream.getVideoTracks()[0];
+        isScreenSharing = true;
 
-        Object.values(peerConnections).forEach(pc => {
+        for (const pc of Object.values(peerConnections)) {
           const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-          if (sender) sender.replaceTrack(screenTrack);
-        });
+          if (sender) {
+            try {
+              await sender.replaceTrack(screenTrack);
+            } catch (err) {
+              console.error('Failed to swap in screen track for a peer:', err);
+            }
+          }
+        }
 
         document.getElementById('video-local').srcObject = screenStream;
 
-        screenTrack.onended = () => {
-          Object.values(peerConnections).forEach(pc => {
+        screenTrack.onended = async () => {
+          isScreenSharing = false;
+          for (const pc of Object.values(peerConnections)) {
             const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-            if (sender && localStream) sender.replaceTrack(localStream.getVideoTracks()[0]);
-          });
+            if (sender && localStream) {
+              try {
+                await sender.replaceTrack(localStream.getVideoTracks()[0]);
+              } catch (err) {
+                console.error('Failed to restore camera track for a peer:', err);
+              }
+            }
+          }
           document.getElementById('video-local').srcObject = localStream;
         };
       } catch (error) {
         console.error('Screen share failed', error);
+        alert('Could not start screen sharing: ' + error.message);
       }
     });
 
