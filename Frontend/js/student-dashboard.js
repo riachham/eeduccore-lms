@@ -5,6 +5,8 @@ const CATS_URL = 'https://eeduccore-lms.onrender.com/api/cats/unit';
 const STATS_URL = 'https://eeduccore-lms.onrender.com/api/stats/student';
 const LIVECLASS_STATUS_URL = 'https://eeduccore-lms.onrender.com/api/liveclass/status';
 
+const ALERT_POLL_INTERVAL_MS = 15000; // how often to re-check for live classes / open CATs
+
 const welcomeName = document.getElementById('welcomeName');
 const welcomeDetails = document.getElementById('welcomeDetails');
 const logoutBtn = document.getElementById('logoutBtn');
@@ -25,6 +27,11 @@ const token = localStorage.getItem('token');
 if (!token) {
   window.location.href = 'login.html';
 }
+
+// Keep the loaded units around so we can re-check alerts on a timer
+// without re-fetching / re-rendering the whole unit list each time.
+let currentUnits = [];
+let alertPollTimer = null;
 
 async function loadProfile() {
   try {
@@ -102,6 +109,28 @@ async function checkUnitAlerts(unitId) {
   return { hasLiveClass, hasOpenCat };
 }
 
+// Re-checks every unit's alert status and updates the button styling.
+// Adds the red pulse when something is active, and REMOVES it again
+// once the live class ends or the CAT deadline passes / is taken down.
+async function refreshUnitAlerts() {
+  currentUnits.forEach(async (unit) => {
+    const { hasLiveClass, hasOpenCat } = await checkUnitAlerts(unit._id);
+    const card = document.getElementById(`unit-card-${unit._id}`);
+    if (!card) return;
+
+    const liveBtn = card.querySelector('button[data-btn="live"]');
+    if (liveBtn) liveBtn.classList.toggle('alert-btn', hasLiveClass);
+
+    const catBtn = card.querySelector('button[data-btn="cat"]');
+    if (catBtn) catBtn.classList.toggle('alert-btn', hasOpenCat);
+  });
+}
+
+function startAlertPolling() {
+  if (alertPollTimer) clearInterval(alertPollTimer);
+  alertPollTimer = setInterval(refreshUnitAlerts, ALERT_POLL_INTERVAL_MS);
+}
+
 async function loadUnits() {
   try {
     const response = await fetch(UNITS_URL, {
@@ -120,6 +149,8 @@ async function loadUnits() {
       return;
     }
 
+    currentUnits = units;
+
     // Render units first
     unitsGrid.innerHTML = units.map(unit => `
       <div class="unit-card" id="unit-card-${unit._id}">
@@ -133,22 +164,12 @@ async function loadUnits() {
       </div>
     `).join('');
 
-    // Then check each unit for alerts and highlight the relevant button
-    units.forEach(async (unit) => {
-      const { hasLiveClass, hasOpenCat } = await checkUnitAlerts(unit._id);
-      const card = document.getElementById(`unit-card-${unit._id}`);
-      if (!card) return;
+    // Check each unit for alerts right away...
+    await refreshUnitAlerts();
 
-      if (hasLiveClass) {
-        const liveBtn = card.querySelector('button[data-btn="live"]');
-        if (liveBtn) liveBtn.classList.add('alert-btn');
-      }
-
-      if (hasOpenCat) {
-        const catBtn = card.querySelector('button[data-btn="cat"]');
-        if (catBtn) catBtn.classList.add('alert-btn');
-      }
-    });
+    // ...then keep re-checking periodically so buttons turn red (or
+    // clear again) live, without the student needing to refresh.
+    startAlertPolling();
 
   } catch (error) {
     unitsGrid.innerHTML = '<p>Failed to load units.</p>';

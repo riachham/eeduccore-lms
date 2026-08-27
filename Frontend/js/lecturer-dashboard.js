@@ -89,6 +89,7 @@ async function loadUnits() {
           <button onclick="openUploadModal('${unit._id}', '${unit.name}')">Upload Notes</button>
           <button onclick="openCatModal('${unit._id}', '${unit.name}')">CAT</button>
           <button onclick="startLiveClass('${unit._id}', '${unit.name}')">Start Live Class</button>
+          <button onclick="endLiveClass('${unit._id}', '${unit.name}')" style="background-color:#b02a2a;">End Live Class</button>
           <button onclick="openAttendanceHistory('${unit._id}', '${unit.name}')">Attendance</button>
         </div>
       </div>
@@ -367,7 +368,29 @@ async function startLiveClass(unitId, unitName) {
     alert('Something went wrong starting the live class.');
   }
 }
+// End Live Class
+async function endLiveClass(unitId, unitName) {
+  if (!confirm(`End the active live class for "${unitName}"?`)) return;
 
+  try {
+    const response = await fetch(`https://eeduccore-lms.onrender.com/api/liveclass/end/${unitId}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.message || 'Failed to end live class');
+      return;
+    }
+
+    alert(`Live class for "${unitName}" ended.`);
+
+  } catch (error) {
+    alert('Something went wrong ending the live class.');
+  }
+}
 // Attendance History Modal
 async function openAttendanceHistory(unitId, unitName) {
   attendanceHistoryUnitName.textContent = `Unit: ${unitName}`;
