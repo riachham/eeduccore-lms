@@ -78,58 +78,29 @@ async function loadStats() {
 
 // Check if a unit has an active live class or any open CAT
 async function checkUnitAlerts(unitId) {
-  let hasAlert = false;
-  let alertText = '';
+  let hasLiveClass = false;
+  let hasOpenCat = false;
 
   try {
-    // Check live class
     const liveResponse = await fetch(`${LIVECLASS_STATUS_URL}/${unitId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const liveData = await liveResponse.json();
-    if (liveData.isActive) {
-      hasAlert = true;
-      alertText = 'LIVE';
-    }
+    hasLiveClass = !!liveData.isActive;
 
-    // Check CATs (only if no live class alert already)
-    if (!hasAlert) {
-      const catResponse = await fetch(`${CATS_URL}/${unitId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const cats = await catResponse.json();
-      if (Array.isArray(cats)) {
-        const hasOpenCat = cats.some(cat => new Date(cat.deadline) > new Date() && cat.questionCount > 0);
-        if (hasOpenCat) {
-          hasAlert = true;
-          alertText = 'CAT';
-        }
-      }
+    const catResponse = await fetch(`${CATS_URL}/${unitId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const cats = await catResponse.json();
+    if (Array.isArray(cats)) {
+      hasOpenCat = cats.some(cat => new Date(cat.deadline) > new Date() && cat.questionCount > 0);
     }
   } catch (error) {
     // Silently ignore alert-check failures, not critical
   }
 
-  return { hasAlert, alertText };
+  return { hasLiveClass, hasOpenCat };
 }
-
-async function loadUnits() {
-  try {
-    const response = await fetch(UNITS_URL, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const units = await response.json();
-
-    if (!response.ok) {
-      unitsGrid.innerHTML = `<p>${units.message || 'Failed to load units'}</p>`;
-      return;
-    }
-
-    if (units.length === 0) {
-      unitsGrid.innerHTML = '<p>No units found for your course.</p>';
-      return;
-    }
 
     // Render units first without badges
     unitsGrid.innerHTML = units.map(unit => `
@@ -137,31 +108,29 @@ async function loadUnits() {
         <h3>${unit.name}</h3>
         <div class="unit-code">${unit.code}</div>
         <div class="unit-actions">
-          <button onclick="joinLiveClass('${unit._id}', '${unit.name}')">Join Live Class</button>
+         <button data-btn="live" onclick="joinLiveClass('${unit._id}', '${unit.name}')">Join Live Class</button>
           <button onclick="openNotesModal('${unit._id}', '${unit.name}')">View Notes</button>
-          <button onclick="openCatModal('${unit._id}', '${unit.name}')">View CAT</button>
+          <button data-btn="cat" onclick="openCatModal('${unit._id}', '${unit.name}')">View CAT</button>
         </div>
       </div>
     `).join('');
 
-    // Then check each unit for alerts and add badges asynchronously
+        // Then check each unit for alerts and highlight the relevant button
     units.forEach(async (unit) => {
-      const { hasAlert, alertText } = await checkUnitAlerts(unit._id);
-      if (hasAlert) {
-        const card = document.getElementById(`unit-card-${unit._id}`);
-        if (card) {
-          const badge = document.createElement('div');
-          badge.className = 'notification-badge';
-          badge.textContent = alertText;
-          card.appendChild(badge);
-        }
+      const { hasLiveClass, hasOpenCat } = await checkUnitAlerts(unit._id);
+      const card = document.getElementById(`unit-card-${unit._id}`);
+      if (!card) return;
+
+      if (hasLiveClass) {
+        const liveBtn = card.querySelector('button[data-btn="live"]');
+        if (liveBtn) liveBtn.classList.add('alert-btn');
+      }
+
+      if (hasOpenCat) {
+        const catBtn = card.querySelector('button[data-btn="cat"]');
+        if (catBtn) catBtn.classList.add('alert-btn');
       }
     });
-
-  } catch (error) {
-    unitsGrid.innerHTML = '<p>Failed to load units.</p>';
-  }
-}
 
 // Notes Modal
 async function openNotesModal(unitId, unitName) {
