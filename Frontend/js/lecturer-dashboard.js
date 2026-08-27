@@ -81,7 +81,7 @@ async function loadUnits() {
       return;
     }
 
-    unitsGrid.innerHTML = units.map(unit => `
+        unitsGrid.innerHTML = units.map(unit => `
       <div class="unit-card">
         <h3>${unit.name}</h3>
         <div class="unit-code">${unit.code}</div>
@@ -89,12 +89,11 @@ async function loadUnits() {
           <button onclick="openUploadModal('${unit._id}', '${unit.name}')">Upload Notes</button>
           <button onclick="openCatModal('${unit._id}', '${unit.name}')">CAT</button>
           <button onclick="startLiveClass('${unit._id}', '${unit.name}')">Start Live Class</button>
-          <button onclick="endLiveClass('${unit._id}', '${unit.name}')" style="background-color:#b02a2a;">End Live Class</button>
+          <button onclick="endLiveClass('${unit._id}', '${unit.name}')">End Live Class</button>
           <button onclick="openAttendanceHistory('${unit._id}', '${unit.name}')">Attendance</button>
         </div>
       </div>
     `).join('');
-
   } catch (error) {
     unitsGrid.innerHTML = '<p>Failed to load units.</p>';
   }
