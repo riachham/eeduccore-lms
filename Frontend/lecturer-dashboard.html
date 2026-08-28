@@ -190,6 +190,20 @@
       </div>
     </div>
   </div>
+  <!-- Exam Marks Modal -->
+<div id="examMarksModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box" style="max-width: 600px;">
+    <h2>Exam Marks</h2>
+    <p id="examMarksUnitName" style="color:#666; margin-bottom:0.5rem;"></p>
+    <p style="font-size:0.85rem; color:#999; margin-bottom:1rem;">Enter each student's physical exam score, then click Save on that row.</p>
+
+    <div id="examMarksList" style="max-height:350px; overflow-y:auto;">
+      <p>Loading students...</p>
+    </div>
+
+    <button type="button" id="closeExamMarksModalBtn" style="background-color:#999; margin-top:1.5rem;">Close</button>
+  </div>
+</div>
 
   <script src="js/lecturer-dashboard.js"></script>
 </body>

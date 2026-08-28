@@ -2,6 +2,7 @@ const API_URL = 'https://eeduccore-lms.onrender.com/api/auth';
 const UNITS_URL = 'https://eeduccore-lms.onrender.com/api/units/my-units';
 const UPLOAD_URL = 'https://eeduccore-lms.onrender.com/api/notes/upload';
 const CATS_BASE_URL = 'https://eeduccore-lms.onrender.com/api/cats';
+const EXAMMARKS_URL = 'https://eeduccore-lms.onrender.com/api/exammarks';
 
 const welcomeName = document.getElementById('welcomeName');
 const welcomeDetails = document.getElementById('welcomeDetails');
@@ -32,6 +33,11 @@ const attendanceHistoryModal = document.getElementById('attendanceHistoryModal')
 const attendanceHistoryUnitName = document.getElementById('attendanceHistoryUnitName');
 const attendanceHistoryList = document.getElementById('attendanceHistoryList');
 const closeAttendanceHistoryBtn = document.getElementById('closeAttendanceHistoryBtn');
+
+const examMarksModal = document.getElementById('examMarksModal');
+const examMarksUnitName = document.getElementById('examMarksUnitName');
+const examMarksList = document.getElementById('examMarksList');
+const closeExamMarksModalBtn = document.getElementById('closeExamMarksModalBtn');
 
 const token = localStorage.getItem('token');
 let selectedUnitId = null;
@@ -91,6 +97,7 @@ async function loadUnits() {
           <button onclick="startLiveClass('${unit._id}', '${unit.name}')">Start Live Class</button>
           <button onclick="endLiveClass('${unit._id}', '${unit.name}')">End Live Class</button>
           <button onclick="openAttendanceHistory('${unit._id}', '${unit.name}')">Attendance</button>
+          <button onclick="openExamMarksModal('${unit._id}', '${unit.name}')">Exam Marks</button>
         </div>
       </div>
     `).join('');
@@ -430,6 +437,101 @@ async function openAttendanceHistory(unitId, unitName) {
 
 closeAttendanceHistoryBtn.addEventListener('click', () => {
   attendanceHistoryModal.style.display = 'none';
+});
+// Exam Marks Modal
+async function openExamMarksModal(unitId, unitName) {
+  selectedUnitId = unitId;
+  examMarksUnitName.textContent = `Unit: ${unitName}`;
+  examMarksList.innerHTML = '<p>Loading students...</p>';
+  examMarksModal.style.display = 'flex';
+
+  try {
+    const response = await fetch(`${EXAMMARKS_URL}/unit/${unitId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const students = await response.json();
+
+    if (!response.ok) {
+      examMarksList.innerHTML = `<p>${students.message || 'Failed to load students'}</p>`;
+      return;
+    }
+
+    if (students.length === 0) {
+      examMarksList.innerHTML = '<p>No students found for this unit.</p>';
+      return;
+    }
+
+    examMarksList.innerHTML = students.map(s => {
+      const max = s.maxMarks || 70;
+      return `
+        <div style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0; border-bottom:1px solid #eee;">
+          <div style="flex:1;">
+            <strong>${s.name}</strong><br/>
+            <span style="font-size:0.8rem; color:#777;">${s.admissionNumber || 'N/A'}</span>
+          </div>
+          <input
+            type="number"
+            min="0"
+            max="${max}"
+            value="${s.marks !== null ? s.marks : ''}"
+            placeholder="/${max}"
+            id="examMark-${s.studentId}"
+            style="width:70px; padding:0.3rem;"
+          />
+          <button onclick="saveExamMark('${unitId}', '${s.studentId}', ${max})" style="padding:0.35rem 0.8rem; background-color:#1a3c6e; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">Save</button>
+          <span id="examMarkStatus-${s.studentId}" style="font-size:0.8rem; min-width:60px;"></span>
+        </div>
+      `;
+    }).join('');
+
+  } catch (error) {
+    examMarksList.innerHTML = '<p>Failed to load students.</p>';
+  }
+}
+
+async function saveExamMark(unitId, studentId, maxMarks) {
+  const input = document.getElementById(`examMark-${studentId}`);
+  const statusEl = document.getElementById(`examMarkStatus-${studentId}`);
+  const marks = Number(input.value);
+
+  if (input.value === '' || isNaN(marks) || marks < 0 || marks > maxMarks) {
+    statusEl.style.color = '#b02a2a';
+    statusEl.textContent = `Enter 0-${maxMarks}`;
+    return;
+  }
+
+  statusEl.style.color = '#999';
+  statusEl.textContent = 'Saving...';
+
+  try {
+    const response = await fetch(`${EXAMMARKS_URL}/set`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ unit: unitId, student: studentId, marks, maxMarks }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      statusEl.style.color = '#b02a2a';
+      statusEl.textContent = data.message || 'Failed';
+      return;
+    }
+
+    statusEl.style.color = '#2a7a3f';
+    statusEl.textContent = 'Saved ✓';
+  } catch (error) {
+    statusEl.style.color = '#b02a2a';
+    statusEl.textContent = 'Error saving';
+  }
+}
+
+closeExamMarksModalBtn.addEventListener('click', () => {
+  examMarksModal.style.display = 'none';
 });
 
 loadProfile();
