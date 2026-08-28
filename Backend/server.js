@@ -17,6 +17,7 @@ const liveClassRoutes = require('./routes/liveClassRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const examMarkRoutes = require('./routes/examMarkRoutes');
+const marksRoutes = require('./routes/marksRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -40,6 +41,7 @@ app.use('/api/liveclass', liveClassRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/exammarks', examMarkRoutes);
+app.use('/api/marks', marksRoutes);
 app.get('/', (req, res) => {
   res.send('Educore API is running');
 });

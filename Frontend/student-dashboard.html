@@ -16,6 +16,8 @@
       <a href="#"><span class="nav-icon">📝</span> Assignments</a>
       <a href="#"><span class="nav-icon">🎥</span> Live Classes</a>
       <a href="#"><span class="nav-icon">✅</span> Attendance</a>
+<a href="#" id="marksNavLink"><span class="nav-icon">🎓</span> Marks</a>
+
     </nav>
     <button class="logout-btn" id="logoutBtn">Logout</button>
   </div>
@@ -85,6 +87,19 @@
       </div>
     </div>
 
+    <!-- Marks Modal -->
+<div id="marksModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box" style="max-width: 650px;">
+    <h2>My Marks</h2>
+    <p style="font-size:0.85rem; color:#999; margin-bottom:1rem;">CAT counts 30%, Exam counts 70% of the total for each unit.</p>
+
+    <div id="marksTableWrapper">
+      <p>Loading marks...</p>
+    </div>
+
+    <button type="button" id="closeMarksModalBtn" style="background-color:#999; margin-top:1.5rem;">Close</button>
+  </div>
+</div>
    
 
   <script src="js/student-dashboard.js"></script>

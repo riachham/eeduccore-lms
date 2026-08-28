@@ -4,6 +4,7 @@ const NOTES_URL = 'https://eeduccore-lms.onrender.com/api/notes/unit';
 const CATS_URL = 'https://eeduccore-lms.onrender.com/api/cats/unit';
 const STATS_URL = 'https://eeduccore-lms.onrender.com/api/stats/student';
 const LIVECLASS_STATUS_URL = 'https://eeduccore-lms.onrender.com/api/liveclass/status';
+const MARKS_URL = 'https://eeduccore-lms.onrender.com/api/marks/my-marks';
 
 const ALERT_POLL_INTERVAL_MS = 15000; // how often to re-check for live classes / open CATs
 
@@ -21,6 +22,11 @@ const catModal = document.getElementById('catModal');
 const catUnitName = document.getElementById('catUnitName');
 const catList = document.getElementById('catList');
 const closeCatModalBtn = document.getElementById('closeCatModalBtn');
+
+const marksNavLink = document.getElementById('marksNavLink');
+const marksModal = document.getElementById('marksModal');
+const marksTableWrapper = document.getElementById('marksTableWrapper');
+const closeMarksModalBtn = document.getElementById('closeMarksModalBtn');
 
 const token = localStorage.getItem('token');
 
