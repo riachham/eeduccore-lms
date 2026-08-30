@@ -4,7 +4,7 @@ const NOTES_URL = 'https://eeduccore-lms.onrender.com/api/notes/unit';
 const CATS_URL = 'https://eeduccore-lms.onrender.com/api/cats/unit';
 const STATS_URL = 'https://eeduccore-lms.onrender.com/api/stats/student';
 const LIVECLASS_STATUS_URL = 'https://eeduccore-lms.onrender.com/api/liveclass/status';
-const MARKS_URL = 'https://eeduccore-lms.onrender.com/api/marks/my-marks';
+
 
 const ALERT_POLL_INTERVAL_MS = 15000; // how often to re-check for live classes / open CATs
 
@@ -23,10 +23,7 @@ const catUnitName = document.getElementById('catUnitName');
 const catList = document.getElementById('catList');
 const closeCatModalBtn = document.getElementById('closeCatModalBtn');
 
-const marksNavLink = document.getElementById('marksNavLink');
-const marksModal = document.getElementById('marksModal');
-const marksTableWrapper = document.getElementById('marksTableWrapper');
-const closeMarksModalBtn = document.getElementById('closeMarksModalBtn');
+
 
 const token = localStorage.getItem('token');
 
@@ -275,69 +272,6 @@ closeCatModalBtn.addEventListener('click', () => {
   catModal.style.display = 'none';
 });
 // Marks Modal
-async function openMarksModal() {
-  marksTableWrapper.innerHTML = '<p>Loading marks...</p>';
-  marksModal.style.display = 'flex';
-
-  try {
-    const response = await fetch(MARKS_URL, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      marksTableWrapper.innerHTML = `<p>${data.message || 'Failed to load marks'}</p>`;
-      return;
-    }
-
-    if (!data.units || data.units.length === 0) {
-      marksTableWrapper.innerHTML = '<p>No units found for your course.</p>';
-      return;
-    }
-
-    const rows = data.units.map(u => `
-      <tr>
-        <td>${u.unitName} <br/><small style="color:#999;">${u.unitCode}</small></td>
-        <td style="text-align:center;">${u.catMark !== null ? u.catMark + '/30' : '—'}</td>
-        <td style="text-align:center;">${u.examMark !== null ? u.examMark + '/70' : '—'}</td>
-        <td style="text-align:center; font-weight:bold;">${u.total !== null ? u.total + '/100' : '—'}</td>
-        <td style="text-align:center; font-weight:bold; color:${u.grade === 'A' ? '#2a7a3f' : (u.grade === 'E' ? '#b02a2a' : '#1a3c6e')};">${u.grade || '—'}</td>
-      </tr>
-    `).join('');
-
-    marksTableWrapper.innerHTML = `
-      <table style="width:100%; border-collapse:collapse;">
-        <thead>
-          <tr style="border-bottom:2px solid #1a3c6e; text-align:left;">
-            <th style="padding:0.6rem 0.4rem;">Unit</th>
-            <th style="padding:0.6rem 0.4rem; text-align:center;">CAT</th>
-            <th style="padding:0.6rem 0.4rem; text-align:center;">Exam</th>
-            <th style="padding:0.6rem 0.4rem; text-align:center;">Total</th>
-            <th style="padding:0.6rem 0.4rem; text-align:center;">Grade</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows}
-        </tbody>
-      </table>
-      <p style="font-size:0.8rem; color:#999; margin-top:1rem;">"—" means that CAT or Exam mark hasn't been recorded yet.</p>
-    `;
-
-  } catch (error) {
-    marksTableWrapper.innerHTML = '<p>Failed to load marks.</p>';
-  }
-}
-
-marksNavLink.addEventListener('click', (e) => {
-  e.preventDefault();
-  openMarksModal();
-});
-
-closeMarksModalBtn.addEventListener('click', () => {
-  marksModal.style.display = 'none';
-});
-
 // Join Live Class
 async function joinLiveClass(unitId, unitName) {
   try {

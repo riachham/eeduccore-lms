@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Educore - My Marks</title>
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <style>
+    .marks-wrapper {
+      background-color: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    table.marks-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table.marks-table th,
+    table.marks-table td {
+      padding: 0.8rem 0.6rem;
+      text-align: left;
+    }
+
+    table.marks-table thead tr {
+      border-bottom: 2px solid #1a3c6e;
+    }
+
+    table.marks-table tbody tr {
+      border-bottom: 1px solid #eee;
+    }
+
+    table.marks-table th.center,
+    table.marks-table td.center {
+      text-align: center;
+    }
+
+    @media (max-width: 700px) {
+      table.marks-table thead {
+        display: none;
+      }
+
+      table.marks-table,
+      table.marks-table tbody,
+      table.marks-table tr,
+      table.marks-table td {
+        display: block;
+        width: 100%;
+      }
+
+      table.marks-table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 0.8rem;
+      }
+
+      table.marks-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.4rem 0;
+        border: none;
+      }
+
+      table.marks-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #1a3c6e;
+        margin-right: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Educore</h2>
+    <nav>
+      <a href="student-dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a href="marks.html" class="active"><span class="nav-icon">🎓</span> Marks</a>
+    </nav>
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="main-content">
+    <div class="welcome-banner">
+      <h1>My Marks</h1>
+      <p style="color:#999; font-size:0.9rem; margin-top:0.3rem;">CAT counts 30%, Exam counts 70% of the total for each unit.</p>
+    </div>
+
+    <div class="marks-wrapper">
+      <div id="marksTableWrapper">
+        <p>Loading marks...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/marks.js"></script>
+</body>
+</html>

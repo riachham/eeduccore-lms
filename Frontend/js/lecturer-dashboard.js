@@ -214,7 +214,9 @@ createCatForm.addEventListener('submit', async (e) => {
   const title = document.getElementById('catTitle').value;
   const description = document.getElementById('catDescription').value;
   const timeLimitMinutes = document.getElementById('catTimeLimit').value;
-  const deadline = document.getElementById('catDeadline').value;
+  const deadlineLocal = document.getElementById('catDeadline').value;
+
+const deadline = new Date(deadlineLocal).toISOString();
 
   try {
     const response = await fetch(`${CATS_BASE_URL}/create`, {
